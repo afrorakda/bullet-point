@@ -39,7 +39,6 @@
             padding: 40px 20px;
             box-sizing: border-box;
             text-align: center;
-            transition: transform 0.3s ease;
         }
 
         h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -1.5px; }
@@ -101,7 +100,7 @@
             font-weight: 800;
             font-size: 0.9rem;
             cursor: pointer;
-            transition: transform 0.05s, background-color 0.05s;
+            transition: transform 0.05s, background-color 0.1s;
             touch-action: manipulation;
             white-space: nowrap;
         }
@@ -114,26 +113,31 @@
             color: #fff; 
             grid-column: span 2; 
             font-size: 1.1rem; 
-            margin-top: 10px; 
+            margin-top: 10px;
+            transition: background-color 0.2s;
+        }
+        .action-btn.copied {
+            background-color: #555 !important;
         }
 
+        /* トースト：画面は動かさず、上部に出るだけ */
         #toast {
             position: fixed; 
             top: -60px;
             left: 0;
             right: 0;
-            height: 50px;
+            height: 45px;
             background: var(--main);
             color: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 700;
             z-index: 3000;
-            transition: top 0.3s ease;
+            transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
         }
-        #toast.visible { top: 0; }
+        #toast.visible { transform: translateY(60px); }
 
         footer { margin-top: 60px; font-size: 12px; color: #777; line-height: 1.8; font-weight: 500; }
         footer a { color: inherit; text-decoration: underline; }
@@ -162,9 +166,9 @@
 </head>
 <body>
 
-<div id="toast">Copied to Clipboard!</div>
+<div id="toast">Formatted!</div>
 
-<div class="container" id="mainContainer">
+<div class="container">
     <h1>Bullet Point</h1>
     <p class="subtitle">Instant professional list formatter.</p>
 
@@ -180,7 +184,7 @@
         <button class="action-btn" onclick="format('check')">[ ] Checkbox</button>
         <button class="action-btn" onclick="addDivider()">Divider ───</button>
         <button class="action-btn" onclick="cleanLines()">Clean Empty Lines</button>
-        <button class="action-btn primary" onclick="copyResult()">Copy to Clipboard</button>
+        <button class="action-btn primary" id="copyBtn" onclick="copyResult()">Copy to Clipboard</button>
     </div>
 
     <div class="footer-btns">
@@ -208,7 +212,7 @@
     const textInput = document.getElementById('textInput');
     const clrBtn = document.getElementById('clrBtn');
     const toast = document.getElementById('toast');
-    const container = document.getElementById('mainContainer');
+    const copyBtn = document.getElementById('copyBtn');
     let toastTimer;
 
     window.onload = () => {
@@ -285,7 +289,19 @@
         if (textInput.value === "") return;
         try {
             await navigator.clipboard.writeText(textInput.value);
-            showToast('Copied to Clipboard!');
+            
+            // ボタンのフィードバック
+            const originalText = copyBtn.innerText;
+            copyBtn.innerText = 'Copied to Clipboard!';
+            copyBtn.classList.add('copied');
+            
+            showToast('Copied!');
+
+            setTimeout(() => {
+                copyBtn.innerText = originalText;
+                copyBtn.classList.remove('copied');
+            }, 1500);
+
         } catch (err) {}
     }
 
@@ -293,11 +309,9 @@
         clearTimeout(toastTimer);
         toast.innerText = msg;
         toast.classList.add('visible');
-        container.style.transform = "translateY(50px)";
         
         toastTimer = setTimeout(() => {
             toast.classList.remove('visible');
-            container.style.transform = "translateY(0)";
         }, 1200);
     }
 

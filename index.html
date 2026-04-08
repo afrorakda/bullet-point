@@ -29,7 +29,6 @@
             justify-content: center;
             min-height: 100vh;
             -webkit-font-smoothing: antialiased;
-            /* 長押し選択を排除 */
             -webkit-touch-callout: none;
             user-select: none;
         }
@@ -40,7 +39,7 @@
             padding: 40px 20px;
             box-sizing: border-box;
             text-align: center;
-            transition: transform 0.3s ease; /* トースト表示時のスライド用 */
+            transition: transform 0.3s ease;
         }
 
         h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -1.5px; }
@@ -66,7 +65,6 @@
             -webkit-appearance: none;
             -webkit-text-fill-color: var(--main) !important;
             opacity: 1 !important;
-            /* textarea内のみ選択を許可 */
             user-select: text;
         }
         textarea::placeholder { color: var(--placeholder); -webkit-text-fill-color: var(--placeholder); }
@@ -119,10 +117,9 @@
             margin-top: 10px; 
         }
 
-        /* 最上部トースト：指に隠れず、コンテンツを押し下げる */
         #toast {
             position: fixed; 
-            top: -60px; /* 初期位置は画面外 */
+            top: -60px;
             left: 0;
             right: 0;
             height: 50px;
@@ -165,7 +162,7 @@
 </head>
 <body>
 
-<div id="toast">Copied!</div>
+<div id="toast">Copied to Clipboard!</div>
 
 <div class="container" id="mainContainer">
     <h1>Bullet Point</h1>
@@ -288,18 +285,7 @@
         if (textInput.value === "") return;
         try {
             await navigator.clipboard.writeText(textInput.value);
-            
-            // 全選択演出（ハイライト）
-            textInput.focus();
-            textInput.select();
-            
             showToast('Copied to Clipboard!');
-            
-            // 0.2秒後に選択を解除して、編集可能な状態に戻す
-            setTimeout(() => {
-                window.getSelection().removeAllRanges();
-            }, 200);
-
         } catch (err) {}
     }
 
@@ -307,7 +293,7 @@
         clearTimeout(toastTimer);
         toast.innerText = msg;
         toast.classList.add('visible');
-        container.style.transform = "translateY(50px)"; /* コンテンツを押し下げる */
+        container.style.transform = "translateY(50px)";
         
         toastTimer = setTimeout(() => {
             toast.classList.remove('visible');

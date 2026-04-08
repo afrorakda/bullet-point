@@ -96,14 +96,17 @@
             font-weight: 800;
             font-size: 0.9rem;
             cursor: pointer;
-            transition: transform 0.1s;
+            transition: transform 0.1s, opacity 0.1s;
             touch-action: manipulation;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        .action-btn:active { transform: scale(0.95); background: var(--border); }
+        .action-btn:active { transform: scale(0.95); opacity: 0.8; }
         .action-btn.primary { background: var(--main); color: #fff; grid-column: span 2; font-size: 1.1rem; margin-top: 10px; }
 
         #toast {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            position: fixed; top: 30px; left: 50%; transform: translateX(-50%);
             background: var(--main); color: #fff;
             padding: 12px 24px; border-radius: 20px; font-size: 0.9rem; font-weight: 700;
             opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 1000;
@@ -143,7 +146,7 @@
     <p class="subtitle">Instant professional list formatter.</p>
 
     <div class="input-wrapper">
-        <textarea id="textInput" placeholder="Paste your text here...&#10;Line one&#10;Line two" oninput="updateClearBtn()"></textarea>
+        <textarea id="textInput" placeholder="Paste your text here...&#10;Line one&#10;Line two" oninput="handleInput()"></textarea>
         <button class="clear-btn" id="clrBtn" onclick="clearText()">×</button>
     </div>
 
@@ -152,9 +155,9 @@
         <button class="action-btn" onclick="format('num')">1. Numbering</button>
         <button class="action-btn" onclick="format('arrow')">▶ Arrow</button>
         <button class="action-btn" onclick="format('check')">[ ] Checkbox</button>
-        <button class="action-btn" onclick="addDivider()">─── Add Divider ───</button>
+        <button class="action-btn" onclick="addDivider()">Divider ───</button>
         <button class="action-btn" onclick="cleanLines()">Clean Empty Lines</button>
-        <button class="action-btn primary" onclick="copyResult()">Copy to Clipboard</button>
+        <button class="action-btn primary" id="copyBtn" onclick="copyResult()">Copy to Clipboard</button>
     </div>
 
     <div class="footer-btns">
@@ -182,6 +185,25 @@
     const textInput = document.getElementById('textInput');
     const clrBtn = document.getElementById('clrBtn');
     const toast = document.getElementById('toast');
+    let toastTimer;
+
+    // Load saved data
+    window.onload = () => {
+        const saved = localStorage.getItem('bullet_point_data');
+        if (saved) {
+            textInput.value = saved;
+            updateClearBtn();
+        }
+    };
+
+    function handleInput() {
+        updateClearBtn();
+        saveData();
+    }
+
+    function saveData() {
+        localStorage.setItem('bullet_point_data', textInput.value);
+    }
 
     function updateClearBtn() {
         clrBtn.classList.toggle('active', textInput.value !== '');
@@ -190,20 +212,17 @@
     function clearText() {
         textInput.value = '';
         updateClearBtn();
+        saveData();
         textInput.focus();
     }
 
-    function getLines() {
-        return textInput.value.split('\n');
-    }
-
     function format(type) {
-        const lines = getLines();
+        const lines = textInput.value.split('\n');
         const formatted = lines.map((line, index) => {
             let content = line.trim();
             if (content === "") return "";
-
-            // Remove existing bullets/numbers at the start
+            
+            // Smart Logic: Clean existing symbols
             content = content.replace(/^([•\-\*\d\.\>▶■\s]|\[\s?\])+/, '').trim();
 
             switch(type) {
@@ -215,20 +234,29 @@
             }
         });
 
-        textInput.value = formatted.filter(l => l !== "").join('\n');
-        showToast('Formatted!');
+        const result = formatted.filter(l => l !== "").join('\n');
+        if (result) {
+            textInput.value = result;
+            saveData();
+            showToast('Formatted!');
+        }
     }
 
     function addDivider() {
         if (textInput.value.trim() === "") return;
         textInput.value = textInput.value.trim() + "\n\n────────────────────";
+        saveData();
         showToast('Divider added!');
     }
 
     function cleanLines() {
-        const lines = getLines();
-        textInput.value = lines.filter(line => line.trim() !== "").join('\n');
-        showToast('Cleaned!');
+        const lines = textInput.value.split('\n');
+        const cleaned = lines.filter(line => line.trim() !== "").join('\n');
+        if (textInput.value !== cleaned) {
+            textInput.value = cleaned;
+            saveData();
+            showToast('Cleaned!');
+        }
     }
 
     async function copyResult() {
@@ -240,9 +268,12 @@
     }
 
     function showToast(msg) {
+        clearTimeout(toastTimer);
         toast.innerText = msg;
         toast.style.opacity = '1';
-        setTimeout(() => toast.style.opacity = '0', 1500);
+        toastTimer = setTimeout(() => {
+            toast.style.opacity = '0';
+        }, 1500);
     }
 
     function showModal() { document.getElementById('modal').style.display = 'flex'; }
